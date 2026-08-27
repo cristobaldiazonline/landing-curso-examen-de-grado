@@ -105,7 +105,40 @@
         </div>
       </div>
     </section>
-
+    <!-- ==========================================
+         SECCIÓN BIBLIOTECA JURÍDICA (API FETCH - E2)
+         ========================================== -->
+    <section id="biblioteca" class="py-5 bg-dark-navy">
+      <div class="container py-4">
+        <div class="text-center mb-5">
+          <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill fw-bold mb-2">
+            RECURSOS DOGMÁTICOS
+          </span>
+          <h2 class="fw-bold text-light">Biblioteca y Manuales de Consulta</h2>
+          <p class="text-muted-light">Catálogo sincronizado en tiempo real vía OpenLibrary API para profundizar en tu estudio.</p>
+        </div>
+<!-- Barra de búsqueda dinámica (E3) -->
+        <div class="row justify-content-center mb-4">
+          <div class="col-md-8 col-lg-6">
+            <div class="input-group">
+              <span class="input-group-text bg-dark border-secondary-subtle text-muted-light">🔍</span>
+              <input 
+                type="text" 
+                id="inputBuscadorLibros" 
+                class="form-control input-dark" 
+                placeholder="Buscar por título de manual o autor..."
+                aria-label="Buscar manual o autor en biblioteca"
+              >
+            </div>
+            <p id="contadorResultados" class="text-muted-light small mt-2 mb-0 text-center"></p>
+          </div>
+        </div>
+        <!-- Contenedor dinámico donde se renderizan los estados y las tarjetas -->
+        <div id="contenedor-libros" class="row g-4 justify-content-center">
+          <!-- Renderizado dinámico vía js/api.js -->
+        </div>
+      </div>
+    </section>
     <!-- ==========================================
          4. SECCIÓN TESTIMONIOS (CASOS DE ÉXITO)
          ========================================== -->
