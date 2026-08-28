@@ -7,8 +7,9 @@ import { fetchLibrosJuridicos, escapeHTML } from './api.js';
 import { filtrarLibros } from './filtro.js';
 import { obtenerFavoritos, alternarFavorito, esFavorito } from './storage.js';
 
-// Expresión regular estricta para email (requiere @ y punto con dominio)
+// Expresiones regulares estrictas
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_REGEX = /^\+?[0-9\s-]{8,15}$/;
 
 // Estado global en memoria para los libros obtenidos de la API
 let catalogoLibros = [];
@@ -161,11 +162,20 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // Limpiar estados de error al escribir en el modal
+  // Limpiar error reactivamente al escribir en el email del modal
   if (modalEmail) {
     modalEmail.addEventListener("input", () => {
       modalEmail.classList.remove("is-invalid");
       const err = modalEmail.parentElement.querySelector(".invalid-feedback");
+      if (err) err.remove();
+    });
+  }
+
+  // Limpiar error reactivamente al escribir en el teléfono del modal
+  if (modalTelefono) {
+    modalTelefono.addEventListener("input", () => {
+      modalTelefono.classList.remove("is-invalid");
+      const err = modalTelefono.parentElement.querySelector(".invalid-feedback");
       if (err) err.remove();
     });
   }
@@ -178,7 +188,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const telValor = modalTelefono ? modalTelefono.value.trim() : "";
       let valido = true;
 
-      // Validación estricta de Regex para correo en el modal
+      // Validación estricta de Regex para correo
       if (!EMAIL_REGEX.test(emailValor)) {
         valido = false;
         modalEmail.classList.add("is-invalid");
@@ -188,11 +198,11 @@ document.addEventListener("DOMContentLoaded", () => {
           err.className = "invalid-feedback d-block";
           modalEmail.parentElement.appendChild(err);
         }
-        err.textContent = "Concéntrate pues! Ingresa un correo electrónico válido (ej. usuario@dominio.cl).";
+        err.textContent = "Ingresa un correo electrónico válido (ej. usuario@dominio.cl).";
       }
 
-      // Validación de teléfono
-      if (telValor.length < 8) {
+      // Validación estricta de Regex para teléfono (solo números, +, espacios y guiones)
+      if (!PHONE_REGEX.test(telValor)) {
         valido = false;
         modalTelefono.classList.add("is-invalid");
         let err = modalTelefono.parentElement.querySelector(".invalid-feedback");
@@ -201,7 +211,7 @@ document.addEventListener("DOMContentLoaded", () => {
           err.className = "invalid-feedback d-block";
           modalTelefono.parentElement.appendChild(err);
         }
-        err.textContent = "Ingresa un teléfono o WhatsApp de contacto válido.";
+        err.textContent = "Ya pues Hombre! Ingresa un número telefónico válido (solo números, ej. +56912345678).";
       }
 
       if (!valido) return;
