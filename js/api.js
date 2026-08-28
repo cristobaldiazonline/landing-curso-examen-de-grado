@@ -1,10 +1,10 @@
 /**
  * Módulo de Consumo de API Externa (E2)
- * Consulta el catálogo de OpenLibrary para obtener manuales y obras de Derecho.
+ * Consulta el catálogo de OpenLibrary para obtener manuales y obras de Derecho en español.
  */
 
-// URL de la API pública de OpenLibrary (búsqueda de libros sobre Derecho / Law)
-const API_URL = 'https://openlibrary.org/subjects/law.json?limit=6';
+// URL de la API de OpenLibrary filtrando por temática jurídica en idioma español
+const API_URL = 'https://openlibrary.org/search.json?q=derecho+civil+procesal&language=spa&limit=6';
 
 /**
  * Sanitiza texto para evitar inyecciones XSS al renderizar data externa.
@@ -22,9 +22,8 @@ export function escapeHTML(str) {
 }
 
 /**
- * Obtiene libros desde la API pública de OpenLibrary.
- * Maneja estados de respuesta HTTP y errores de red.
- * @returns {Promise<Array>} Lista de obras jurídicas
+ * Obtiene libros jurídicos en español desde OpenLibrary.
+ * @returns {Promise<Array>} Lista de obras
  */
 export async function fetchLibrosJuridicos() {
   try {
@@ -36,8 +35,14 @@ export async function fetchLibrosJuridicos() {
 
     const data = await respuesta.json();
     
-    // Retorna el array de obras o un array vacío si no hay resultados
-    return data.works || [];
+    // Mapea la estructura del endpoint search.json
+    const docs = data.docs || [];
+    return docs.map((doc) => ({
+      key: doc.key,
+      title: doc.title,
+      authors: (doc.author_name || []).map((name) => ({ name })),
+      first_publish_year: doc.first_publish_year
+    }));
   } catch (error) {
     console.error('Error al consultar OpenLibrary API:', error);
     throw error;
