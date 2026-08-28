@@ -5,9 +5,21 @@
 import { initValidacionContacto } from './validacion.js';
 import { fetchLibrosJuridicos, escapeHTML } from './api.js';
 import { filtrarLibros } from './filtro.js';
+import { obtenerFavoritos, alternarFavorito, esFavorito } from './storage.js';
 
 // Estado global en memoria para los libros obtenidos de la API
 let catalogoLibros = [];
+
+/**
+ * Actualiza el contador de libros guardados en la interfaz.
+ */
+function actualizarContadorFavoritos() {
+  const badgeFavoritos = document.getElementById('contadorFavoritosBadge');
+  if (badgeFavoritos) {
+    const total = obtenerFavoritos().length;
+    badgeFavoritos.textContent = `${total} guardada${total === 1 ? '' : 's'}`;
+  }
+}
 
 /**
  * Renderiza una lista de libros en el DOM de forma segura (XSS-safe).
@@ -34,11 +46,13 @@ function renderTarjetasLibros(libros) {
   }
 
   contenedor.innerHTML = libros.map((libro) => {
+    const key = libro.key ? escapeHTML(libro.key) : escapeHTML(libro.title);
     const titulo = escapeHTML(libro.title);
     const autores = libro.authors && libro.authors.length > 0 
       ? escapeHTML(libro.authors.map(a => a.name).join(', ')) 
       : 'Autor de referencia';
     const anio = libro.first_publish_year ? escapeHTML(libro.first_publish_year) : 'Edición académica';
+    const guardado = esFavorito(key);
 
     return `
       <div class="col-md-6 col-lg-4">
@@ -46,22 +60,43 @@ function renderTarjetasLibros(libros) {
           <div>
             <div class="d-flex justify-content-between align-items-center mb-2">
               <span class="badge bg-secondary text-light small">${anio}</span>
-              <span class="text-primary small">📖 Manual</span>
+              <button 
+                class="btn btn-sm ${guardado ? 'btn-warning text-dark' : 'btn-outline-warning'} btn-favorito" 
+                data-key="${key}"
+                aria-label="Guardar obra para estudio"
+                title="${guardado ? 'Remover de mis lecturas' : 'Guardar en mis lecturas'}"
+              >
+                ${guardado ? '★ Guardado' : '☆ Guardar'}
+              </button>
             </div>
             <h3 class="h5 fw-bold text-light mb-2">${titulo}</h3>
             <p class="text-muted-light small mb-3"><strong>Autor(es):</strong> ${autores}</p>
           </div>
-          <div class="mt-3 pt-3 border-top border-secondary-subtle">
+          <div class="mt-3 pt-3 border-top border-secondary-subtle d-flex justify-content-between align-items-center">
             <span class="badge bg-primary-subtle text-primary border border-primary-subtle small">Doctrina de Apoyo</span>
           </div>
         </div>
       </div>
     `;
   }).join('');
+
+  // Vincular eventos click a los botones de favoritos (E4)
+  const botonesFav = contenedor.querySelectorAll('.btn-favorito');
+  botonesFav.forEach((boton) => {
+    boton.addEventListener('click', (e) => {
+      const libroKey = e.currentTarget.getAttribute('data-key');
+      alternarFavorito(libroKey);
+      actualizarContadorFavoritos();
+      // Re-renderizar la vista actual para reflejar el cambio de estado
+      const inputBuscador = document.getElementById('inputBuscadorLibros');
+      const termino = inputBuscador ? inputBuscador.value : '';
+      renderTarjetasLibros(filtrarLibros(catalogoLibros, termino));
+    });
+  });
 }
 
 /**
- * Inicializa la carga de la API y el buscador interactivo (E2 + E3)
+ * Inicializa la carga de la API, el buscador y el almacenamiento local (E2 + E3 + E4)
  */
 async function initBiblioteca() {
   const contenedor = document.getElementById('contenedor-libros');
@@ -80,6 +115,7 @@ async function initBiblioteca() {
   try {
     catalogoLibros = await fetchLibrosJuridicos();
     renderTarjetasLibros(catalogoLibros);
+    actualizarContadorFavoritos();
 
     // Event listener en tiempo real para el filtro dinámico (E3)
     if (inputBuscador) {
@@ -105,7 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Inicializar Validación (E1)
   initValidacionContacto("formContacto");
 
-  // Inicializar Biblioteca con Filtro en Tiempo Real (E2 + E3)
+  // Inicializar Biblioteca con Filtro y Persistencia (E2 + E3 + E4)
   initBiblioteca();
 
   // Modal interactivo
