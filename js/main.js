@@ -7,6 +7,9 @@ import { fetchLibrosJuridicos, escapeHTML } from './api.js';
 import { filtrarLibros } from './filtro.js';
 import { obtenerFavoritos, alternarFavorito, esFavorito } from './storage.js';
 
+// Expresión regular estricta para email (requiere @ y punto con dominio)
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 // Estado global en memoria para los libros obtenidos de la API
 let catalogoLibros = [];
 
@@ -87,7 +90,6 @@ function renderTarjetasLibros(libros) {
       const libroKey = e.currentTarget.getAttribute('data-key');
       alternarFavorito(libroKey);
       actualizarContadorFavoritos();
-      // Re-renderizar la vista actual para reflejar el cambio de estado
       const inputBuscador = document.getElementById('inputBuscadorLibros');
       const termino = inputBuscador ? inputBuscador.value : '';
       renderTarjetasLibros(filtrarLibros(catalogoLibros, termino));
@@ -117,7 +119,6 @@ async function initBiblioteca() {
     renderTarjetasLibros(catalogoLibros);
     actualizarContadorFavoritos();
 
-    // Event listener en tiempo real para el filtro dinámico (E3)
     if (inputBuscador) {
       inputBuscador.addEventListener('input', (e) => {
         const termino = e.target.value;
@@ -138,16 +139,18 @@ async function initBiblioteca() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Inicializar Validación (E1)
+  // Inicializar Validación Formulario Principal (E1)
   initValidacionContacto("formContacto");
 
   // Inicializar Biblioteca con Filtro y Persistencia (E2 + E3 + E4)
   initBiblioteca();
 
-  // Modal interactivo
+  // Control interactivo y validación del Modal de Inscripción
   const planTexto = document.getElementById("planSeleccionadoTexto");
   const botonesPlan = document.querySelectorAll("[data-plan]");
   const formModal = document.getElementById("formModalInscripcion");
+  const modalEmail = document.getElementById("modalEmail");
+  const modalTelefono = document.getElementById("modalTelefono");
 
   botonesPlan.forEach((boton) => {
     boton.addEventListener("click", (e) => {
@@ -158,13 +161,53 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // Limpiar estados de error al escribir en el modal
+  if (modalEmail) {
+    modalEmail.addEventListener("input", () => {
+      modalEmail.classList.remove("is-invalid");
+      const err = modalEmail.parentElement.querySelector(".invalid-feedback");
+      if (err) err.remove();
+    });
+  }
+
   if (formModal) {
     formModal.addEventListener("submit", (e) => {
       e.preventDefault();
-      const emailModal = document.getElementById("modalEmail").value.trim();
-      const planActual = planTexto ? planTexto.textContent : "Plan Grado";
+      
+      const emailValor = modalEmail ? modalEmail.value.trim() : "";
+      const telValor = modalTelefono ? modalTelefono.value.trim() : "";
+      let valido = true;
 
-      alert(`Postulación confirmada para: ${planActual}.\nCoordinaremos contigo al correo: ${emailModal}`);
+      // Validación estricta de Regex para correo en el modal
+      if (!EMAIL_REGEX.test(emailValor)) {
+        valido = false;
+        modalEmail.classList.add("is-invalid");
+        let err = modalEmail.parentElement.querySelector(".invalid-feedback");
+        if (!err) {
+          err = document.createElement("div");
+          err.className = "invalid-feedback d-block";
+          modalEmail.parentElement.appendChild(err);
+        }
+        err.textContent = "Concéntrate pues! Ingresa un correo electrónico válido (ej. usuario@dominio.cl).";
+      }
+
+      // Validación de teléfono
+      if (telValor.length < 8) {
+        valido = false;
+        modalTelefono.classList.add("is-invalid");
+        let err = modalTelefono.parentElement.querySelector(".invalid-feedback");
+        if (!err) {
+          err = document.createElement("div");
+          err.className = "invalid-feedback d-block";
+          modalTelefono.parentElement.appendChild(err);
+        }
+        err.textContent = "Ingresa un teléfono o WhatsApp de contacto válido.";
+      }
+
+      if (!valido) return;
+
+      const planActual = planTexto ? planTexto.textContent : "Plan Grado";
+      alert(`Postulación confirmada para: ${planActual}.\nCoordinaremos contigo al correo: ${emailValor}`);
       
       const modalElement = document.getElementById("modalInscripcion");
       const modalInstance = bootstrap.Modal.getInstance(modalElement);
