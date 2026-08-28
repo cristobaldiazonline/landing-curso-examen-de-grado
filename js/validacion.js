@@ -104,7 +104,7 @@ export function initValidacionContacto(formId) {
 
     // 2. Validar Email
     if (!email || !EMAIL_REGEX.test(email.value.trim())) {
-      mostrarError(email, 'Ingresa un correo electrónico corporativo o personal válido.');
+      mostrarError(email, 'ponle más bebida ¿ve profe que hice la tarea?');
       esValido = false;
     } else {
       marcarValido(email);
